@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html></html>
+<head>
+  <title>Tic Tac Toe</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--link(href='http://fonts.googleapis.com/css?family=Raleway:400', rel='stylesheet', type='text/css')-->
+  <link rel="stylesheet" type="text/css" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="app.css">
+  <!--if lt IE 9
+  script(src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7/html5shiv.js")
+  script(src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.js")
+  
+  
+  -->
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row"><i id="backButton" class="fa fa-arrow-circle-o-left hideButton"></i>
+      <table id="gameGrid" class="table table-bordered">
+        <tbody>
+          <tr>
+            <td id="x0y0" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+            <td id="x1y0" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+            <td id="x2y0" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+          </tr>
+          <tr>
+            <td id="x0y1" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+            <td id="x1y1" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+            <td id="x2y1" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+          </tr>
+          <tr>
+            <td id="x0y2" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+            <td id="x1y2" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+            <td id="x2y2" class="clickable"><i class="fa fa-times hide"></i><i class="fa fa-circle-o hide"></i></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery-hashchange/v1.3/jquery.ba-hashchange.js"></script>
+  <script type="text/javascript" src="app.js"></script>
+</body>
