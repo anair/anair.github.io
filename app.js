@@ -1,5 +1,5 @@
 $(function() {
-  return GameUtils.initGameMatrix();
+  GameUtils.initGameMatrix();
 });
 
 var GameMatrix;
@@ -96,11 +96,9 @@ GameMatrix.prototype.getTheNextBestMove = function(nextState) {
   var currentBestMove, nextMove, nextMoves, _i, _len;
   nextMoves = this.getNextMoves(nextState);
   currentBestMove = null;
-  console.log(nextMoves);
   for (_i = 0, _len = nextMoves.length; _i < _len; _i++) {
     nextMove = nextMoves[_i];
     currentBestMove = nextMove.compareWith(currentBestMove, nextState);
-    console.log(currentBestMove);
   }
   if (currentBestMove == null) {
     return null;
@@ -109,7 +107,7 @@ GameMatrix.prototype.getTheNextBestMove = function(nextState) {
 };
 
 GameMatrix.prototype.getNextMoves = function(nextState) {
-  var clonedGameMatrix, gameMatrix, matrix, nextMove, nextMoveResult, nextMoveResults, nextMoves, o, results, square, winningState, x, y, _i, _j, _k, _l, _len, _len1, _len2, _m;
+  var clonedGameMatrix, gameMatrix, matrix, nextMove, nextMoveResult, nextMoveResults, nextMoves, o, square, winningState, x, y, _i, _j, _k, _len;
   gameMatrix = this;
   matrix = this.matrix;
   nextMoves = [];
@@ -121,40 +119,33 @@ GameMatrix.prototype.getNextMoves = function(nextState) {
         nextMove = new NextMove(clonedGameMatrix, clonedGameMatrix.matrix[x][y]);
         nextMove.lastAdded.state = nextState;
         nextMoves.push(nextMove);
+        winningState = nextMove.gameMatrix.getWinningState();
+        if (winningState != null) {
+          if (winningState === "x") {
+            nextMove.x = 1;
+            nextMove.o = 0;
+            return [nextMove];
+          } else {
+            nextMove.x = 0;
+            nextMove.o = 1;
+            return [nextMove];
+          }
+        } else {
+          nextMoveResults = nextMove.gameMatrix.getNextMoves(GameUtils.toggleState(nextState));
+          x = 0;
+          o = 0;
+          for (_k = 0, _len = nextMoveResults.length; _k < _len; _k++) {
+            nextMoveResult = nextMoveResults[_k];
+            x = nextMoveResult.x / 2 + x;
+            o = nextMoveResult.o / 2 + o;
+          }
+          nextMove.x = x;
+          nextMove.o = o;
+        }
       }
     }
   }
-  results = [];
-  for (_k = 0, _len = nextMoves.length; _k < _len; _k++) {
-    nextMove = nextMoves[_k];
-    winningState = nextMove.gameMatrix.getWinningState();
-    if (winningState != null) {
-      if (winningState === "x") {
-        nextMove.x = 1;
-        nextMove.o = 0;
-        return [nextMove];
-      } else {
-        nextMove.x = 0;
-        nextMove.o = 1;
-        return [nextMove];
-      }
-    }
-  }
-  for (_l = 0, _len1 = nextMoves.length; _l < _len1; _l++) {
-    nextMove = nextMoves[_l];
-    nextMoveResults = nextMove.gameMatrix.getNextMoves(GameUtils.toggleState(nextState));
-    x = 0;
-    o = 0;
-    for (_m = 0, _len2 = nextMoveResults.length; _m < _len2; _m++) {
-      nextMoveResult = nextMoveResults[_m];
-      x = nextMoveResult.x / 2 + x;
-      o = nextMoveResult.o / 2 + o;
-    }
-    nextMove.x = x;
-    nextMove.o = o;
-    results.push(nextMove);
-  }
-  return results;
+  return nextMoves;
 };
 
 GameMatrix.prototype.getWinners = function() {
@@ -226,7 +217,9 @@ GameUtils = (function() {
       return self.parseUrl();
     });
     self.$backButton.on("click", function(e) {
-      return window.history.back();
+      if (self.moves.length > 0) {
+        return window.history.back();
+      }
     });
   };
   self.resetGameMatrix = function() {
@@ -239,9 +232,9 @@ GameUtils = (function() {
   };
   self.toggleNextToPlay = function() {
     if (self.nextToPlay === "o") {
-      return self.nextToPlay = "x";
+      self.nextToPlay = "x";
     } else {
-      return self.nextToPlay = "o";
+      self.nextToPlay = "o";
     }
   };
   self.toggleState = function(state) {
@@ -255,6 +248,12 @@ GameUtils = (function() {
   };
   self.isFirstAiMove = function() {
     return self.moves.length === 0;
+  };
+  self.getTimeToWaitBetweenMoves = function() {
+    if (self.isFirstAiMove()) {
+      return 300;
+    }
+    return 600;
   };
   self.plotWinner = function() {
     var winner, winners, _i, _len;
@@ -272,12 +271,11 @@ GameUtils = (function() {
   };
   self.replay = function(url) {
     var aiSquare, square, x, y;
-    console.log(url);
-    square = null;
-    aiSquare = null;
     if (((url != null ? url.length : void 0) == null) || url.length < 4) {
       return;
     }
+    square = null;
+    aiSquare = null;
     x = url.charAt(1);
     y = url.charAt(3);
     if (x <= 2 && y <= 2) {
@@ -297,10 +295,12 @@ GameUtils = (function() {
       aiSquare: aiSquare,
       url: url
     });
-    if (self.matrix.isGameOverInADraw()) {
-      return self.rewindBackToStart();
+    if (self.matrix.winners != null) {
+      self.rewindBackToStart(1400);
+    } else if (self.matrix.isGameOverInADraw()) {
+      self.rewindBackToStart();
     } else {
-      return self.showBackButton();
+      self.showBackButton();
     }
   };
   self.popMoves = function(newLength) {
@@ -346,36 +346,41 @@ GameUtils = (function() {
       url: url
     });
     location.hash = location.hash + "/" + url;
-    if (self.matrix.isGameOverInADraw()) {
+    if (self.matrix.winners != null) {
+      self.rewindBackToStart(1400);
+    } else if (self.matrix.isGameOverInADraw()) {
       self.rewindBackToStart();
     } else {
       self.showBackButton();
     }
   };
   self.showBackButton = function() {
-    return self.$backButton.removeClass("hideButton");
+    self.$backButton.removeClass("hideButton");
   };
   self.hideBackButton = function() {
-    return self.$backButton.addClass("hideButton");
+    self.$backButton.addClass("hideButton");
   };
-  self.rewindBackToStart = function() {
+  self.rewindBackToStart = function(time) {
+    if (time == null) {
+      time = 1000;
+    }
     self.hideBackButton();
-    return setTimeout(function() {
+    setTimeout(function() {
       var goBackInHistory;
       $(self.gameGridId).addClass(self.inProgressClass);
       goBackInHistory = function() {
         window.history.back();
         if (self.moves.length > 1) {
-          return setTimeout(goBackInHistory, 500);
+          return setTimeout(goBackInHistory, time / 2);
         } else {
           return $(self.gameGridId).removeClass(self.inProgressClass);
         }
       };
       return goBackInHistory();
-    }, 1000);
+    }, time);
   };
   self.parseUrl = function() {
-    var exisitingPlayerMove, i, locationHash, mismatch, newMove, newMoves, newPlayerMove, _i, _j, _k, _len, _ref, _ref1, _ref2, _results;
+    var exisitingPlayerMove, i, locationHash, mismatch, newMove, newMoves, newPlayerMove, _i, _j, _k, _len, _ref, _ref1, _ref2;
     locationHash = location.hash;
     if ((locationHash == null) || locationHash === "") {
       self.popMoves(0);
@@ -403,29 +408,25 @@ GameUtils = (function() {
       return;
     }
     if (newMoves.length < self.moves.length) {
-      return self.popMoves(newMoves.length);
+      self.popMoves(newMoves.length);
     } else if (newMoves.length > self.moves.length) {
-      _results = [];
       for (i = _k = _ref1 = self.moves.length, _ref2 = newMoves.length - 1; _ref1 <= _ref2 ? _k <= _ref2 : _k >= _ref2; i = _ref1 <= _ref2 ? ++_k : --_k) {
-        _results.push(self.replay(newMoves[i]));
+        self.replay(newMoves[i]);
       }
-      return _results;
     }
   };
   self.initGameFromUrl = function() {
-    var locationHash, newMove, newMoves, _i, _len, _results;
+    var locationHash, newMove, newMoves, _i, _len;
     locationHash = location.hash;
     if ((locationHash == null) || locationHash === "") {
       return;
     }
     locationHash = locationHash.substring(2);
     newMoves = locationHash.split("/");
-    _results = [];
     for (_i = 0, _len = newMoves.length; _i < _len; _i++) {
       newMove = newMoves[_i];
-      _results.push(self.replay(newMove));
+      self.replay(newMove);
     }
-    return _results;
   };
   return self;
 })();
@@ -495,15 +496,11 @@ Square.prototype.click = function() {
   }
   $(GameUtils.gameGridId).addClass(GameUtils.inProgressClass);
   self.aiClick();
-  timeToWait = 600;
-  if (GameUtils.isFirstAiMove()) {
-    timeToWait = 300;
-  }
-  return setTimeout(function() {
+  timeToWait = GameUtils.getTimeToWaitBetweenMoves();
+  setTimeout(function() {
     var square;
     square = GameUtils.matrix.getTheNextBestMove(GameUtils.nextToPlay);
     if (square != null) {
-      console.log(square);
       square = GameUtils.matrix.matrix[square.x][square.y];
       square.aiClick();
     }
@@ -527,7 +524,7 @@ Square.prototype.aiClick = function() {
       this.state = "x";
     }
   }
-  return GameUtils.plotWinner();
+  GameUtils.plotWinner();
 };
 
 Square.prototype.getElement = function() {
@@ -538,17 +535,17 @@ Square.prototype.initClickHandler = function() {
   var self;
   self = this;
   this.getElement().addClass(GameUtils.clickableClass);
-  return this.getElement().on("click", function() {
+  this.getElement().on("click", function() {
     return self.click();
   });
 };
 
 Square.prototype.markWinner = function() {
-  return this.getElement().addClass("winner");
+  this.getElement().addClass("winner");
 };
 
 Square.prototype.unmarkWinner = function() {
-  return this.getElement().removeClass("winner");
+  this.getElement().removeClass("winner");
 };
 
 Square.prototype.reset = function() {
@@ -558,5 +555,5 @@ Square.prototype.reset = function() {
   $square = this.getElement();
   $square.removeClass("winner");
   $square.children(GameUtils.oClass).addClass("hide");
-  return $square.children(GameUtils.xClass).addClass("hide");
+  $square.children(GameUtils.xClass).addClass("hide");
 };
